@@ -4,16 +4,46 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title></title>
-	<script type="text/javascript">
+	<script src="js/validation.js">
 		
 	</script>
+	<style type="text/css">
+		span{
+			color: red;
+		}
+		h1
+		{
+			color: blue;
+			background-color: cyan;
+		}
+		.a1
+		{
+			background-color: cyan;
+			margin-top: 100px;
+			margin-bottom: 100px;
+			margin-left: 100px;
+			margin-right: 100px;
+		}
+		.a2
+		{
+			background-color: cyan;
+			padding-top: 100px;
+			padding-bottom: 100px;
+			padding-left: 100px;
+			padding-right: 100px;
+		}
+	</style>
 </head>
 <body>
-<form method="post" action="" enctype="multipart/form-data">
+	<h1>Student Registration</h1>
+	<p class="a1">Enter Your Details</p>
+	<p class="a2">Enter Your Details</p>
+<form method="post" action="" enctype="multipart/form-data" name="frm">
 	<table>
 		<tr>
 			<td>First Name</td>
-			<td><input type="text" name="fname" required></td>
+			<td><input type="text" name="fname" onblur="checkFname();"></td>
+			<td><span id="fname"></span></td>
 		</tr>
 		<tr>
 			<td>Last Name</td>
@@ -21,11 +51,13 @@
 		</tr>
 		<tr>
 			<td>Email</td>
-			<td><input type="email" name="email"></td>
+			<td><input type="email" name="email" onblur="checkEmail();"></td>
+			<td><span id="email"></td>
 		</tr>
 		<tr>
 			<td>Mobile</td>
-			<td><input type="number" name="mobile"></td>
+			<td><input type="text" name="mobile" onblur="checkMobile();" style="color: green;"></td>
+			<td><span id="mobile"></span></td>
 		</tr>
 		<tr>
 			<td>Address</td>
@@ -80,11 +112,14 @@
 		</tr>
 		<tr>
 			<td>Password</td>
-			<td><input type="password" name="password"></td>
+			<td><input type="password" name="password" onblur="checkPassword();"></td>
+			<td><span id="password"></span></td>
 		</tr>
 		<tr>
 			<td>Confirm Password</td>
-			<td><input type="password" name="cpassword"></td>
+			<td><input type="password" name="cpassword" onblur="chPassword();"></td>
+			<td><span id="cpassword"></span></td>
+
 		</tr>
 		<tr>
 			<td colspan="2" align="center">
