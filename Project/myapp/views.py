@@ -2,6 +2,53 @@ from django.shortcuts import render,redirect
 from .models import User,Product,Wishlist,Cart
 import requests
 import random
+import stripe
+from django.conf import settings
+from django.http import JsonResponse,HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+stripe.api_key = settings.STRIPE_PRIVATE_KEY
+YOUR_DOMAIN = 'http://localhost:8000'
+
+
+@csrf_exempt
+def create_checkout_session(request):
+	amount = int(json.load(request)['post_data'])
+	final_amount=amount*100
+	
+	session = stripe.checkout.Session.create(
+		payment_method_types=['card'],
+		line_items=[{
+			'price_data': {
+				'currency': 'inr',
+				'product_data': {
+					'name': 'Checkout Session Data',
+					},
+				'unit_amount': final_amount,
+				},
+			'quantity': 1,
+			}],
+		mode='payment',
+		success_url=YOUR_DOMAIN + '/success.html',
+		cancel_url=YOUR_DOMAIN + '/cancel.html',)
+	return JsonResponse({'id': session.id})
+
+def success(request):
+	user=User.objects.get(email=request.session['email'])
+	carts=Cart.objects.filter(user=user,payment_status=False)
+	for i in carts:
+		i.payment_status=True
+		i.save()
+		
+	carts=Cart.objects.filter(user=user,payment_status=False)
+	request.session['cart_count']=len(carts)
+	return render(request,'success.html')
+
+def cancel(request):
+	return render(request,'cancel.html')
+
+
 # Create your views here.
 def index(request):
 	products=Product.objects.all()
@@ -56,7 +103,7 @@ def login(request):
 					request.session['profile_pic']=user.profile_pic.url
 					wishlists=Wishlist.objects.filter(user=user)
 					request.session['wishlist_count']=len(wishlists)
-					carts=Cart.objects.filter(user=user)
+					carts=Cart.objects.filter(user=user,payment_status=False)
 					request.session['cart_count']=len(carts)
 					return redirect('index')
 				else:
@@ -250,7 +297,7 @@ def product_details(request,pk):
 	except:
 		pass
 	try:
-		Cart.objects.get(user=user,product=product)
+		Cart.objects.get(user=user,product=product,payment_status=False)
 		cart_flag=True
 	except:
 		pass
@@ -290,7 +337,7 @@ def add_to_cart(request,pk):
 def cart(request):
 	net_price=0
 	user=User.objects.get(email=request.session['email'])
-	carts=Cart.objects.filter(user=user)
+	carts=Cart.objects.filter(user=user,payment_status=False)
 	request.session['cart_count']=len(carts)
 	for i in carts:
 		net_price=net_price+i.total_price
@@ -299,7 +346,7 @@ def cart(request):
 def remove_from_cart(request,pk):
 	product=Product.objects.get(pk=pk)
 	user=User.objects.get(email=request.session['email'])
-	cart=Cart.objects.get(user=user,product=product)
+	cart=Cart.objects.get(user=user,product=product,payment_status=False)
 	cart.delete()
 	return redirect('cart')
 
@@ -311,3 +358,18 @@ def change_qty(request):
 	cart.total_price=cart.product_price*product_qty
 	cart.save()
 	return redirect('cart')
+
+def myorder(request):
+	user=User.objects.get(email=request.session['email'])
+	carts=Cart.objects.filter(user=user,payment_status=True)
+	return render(request,'myorder.html',{'carts':carts})
+
+def seller_view_order(request):
+	myorder = []
+	seller=User.objects.get(email=request.session['email'])
+	carts=Cart.objects.filter(payment_status=True)
+	for i in carts:
+		if i.product.seller == seller:
+			myorder.append(i)
+
+	return render(request,'seller-view-order.html',{'myorder':myorder})
